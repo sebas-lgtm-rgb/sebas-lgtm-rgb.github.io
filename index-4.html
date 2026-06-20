@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0B6E4F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitGana">
+<link rel="manifest" href="manifest.json">
+<title>FitGana</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #0066FF;
+    --blue-dark: #0047B3;
+    --green: #00C853;
+    --green-dark: #009624;
+    --dark: #0A0E14;
+    --surface: #131A22;
+    --card: #1A222C;
+    --border: #2A3441;
+    --text: #F5F5F5;
+    --muted: #8896A6;
+    --gold: #FFD700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  .screen { display: none; min-height: 100vh; padding-bottom: 80px; }
+  .screen.active { display: block; }
+
+  nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: #0E141B;
+    border-top: 1px solid var(--border);
+    display: flex; z-index: 100;
+  }
+  nav button {
+    flex: 1; padding: 12px 0 10px;
+    background: none; border: none; color: var(--muted);
+    font-family: 'Barlow', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: .05em; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: color .2s;
+  }
+  nav button.active { color: var(--green); }
+  nav button svg { width: 22px; height: 22px; }
+
+  .header {
+    background: linear-gradient(135deg, #001A33, #002B1A);
+    padding: 20px 20px 16px;
+    border-bottom: 2px solid var(--blue);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px; font-weight: 900; letter-spacing: .05em;
+    color: var(--text);
+  }
+  .logo span { color: var(--green); }
+  .points-badge {
+    background: linear-gradient(90deg, var(--blue), var(--blue-dark));
+    padding: 6px 14px; border-radius: 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .streak-bar {
+    margin-top: 14px;
+    background: rgba(255,255,255,.05);
+    border-radius: 10px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .streak-bar .streak-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px; font-weight: 900; color: var(--green); line-height: 1;
+  }
+  .xp-bar-wrap { flex: 1; }
+  .xp-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-align: right; }
+  .xp-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--green)); border-radius: 3px; transition: width .4s; }
+
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: .12em;
+    color: var(--muted); text-transform: uppercase;
+    padding: 20px 20px 10px;
+  }
+
+  .exercises-grid { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .ex-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: transform .15s, border-color .15s;
+    position: relative; overflow: hidden;
+  }
+  .ex-card:active { transform: scale(.98); }
+  .ex-card.done { border-color: var(--green); opacity: .7; }
+  .ex-card.done::after {
+    content: '✓ HECHO'; position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--green); color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    padding: 3px 8px; border-radius: 6px;
+  }
+  .ex-icon {
+    width: 50px; height: 50px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .ex-info { flex: 1; min-width: 0; }
+  .ex-name { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .ex-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .ex-pts { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: var(--green); flex-shrink: 0; margin-right: 8px; }
+  .ex-pts span { font-size: 11px; font-weight: 600; color: var(--muted); display: block; text-align: center; }
+  .ex-arrow { color: var(--muted); flex-shrink: 0; }
+
+  .filters { display: flex; gap: 8px; padding: 0 16px 4px; overflow-x: auto; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: none;
+    color: var(--muted); font-family: 'Barlow', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+  }
+  .filter-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+
+  .rewards-grid { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+  .reward-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+  .reward-icon { font-size: 36px; flex-shrink: 0; }
+  .reward-info { flex: 1; }
+  .reward-name { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; }
+  .reward-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .claim-btn {
+    margin-top: 10px; width: 100%; padding: 10px;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    border: none; border-radius: 10px; color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: .05em;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .claim-btn:disabled { opacity: .4; cursor: not-allowed; background: var(--border); color: var(--muted); }
+  .claim-btn.claimed { background: var(--green); }
+
+  .vip-card {
+    margin: 0 16px;
+    background: linear-gradient(135deg, #001A33, #00331F);
+    border: 2px solid var(--green);
+    border-radius: 16px; padding: 20px;
+    position: relative; overflow: hidden;
+  }
+  .vip-card::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(0,200,83,.2), transparent 70%);
+    border-radius: 50%;
+  }
+  .vip-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--green); color: #06241A;
+    padding: 4px 12px; border-radius: 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 900; letter-spacing: .1em; margin-bottom: 10px;
+  }
+  .vip-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; line-height: 1.1; }
+  .vip-perks { margin: 12px 0; list-style: none; }
+  .vip-perks li { font-size: 13px; color: var(--muted); padding: 3px 0; display: flex; align-items: center; gap: 8px; }
+  .vip-perks li::before { content: '⚡'; font-size: 12px; }
+  .vip-timer { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--green); letter-spacing: .05em; }
+
+  .badges-grid { padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .badge-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; }
+  .badge-card.unlocked { border-color: var(--green); }
+  .badge-emoji { font-size: 40px; margin-bottom: 8px; }
+  .badge-card.locked .badge-emoji { filter: grayscale(1); opacity: .4; }
+  .badge-name { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; line-height: 1.2; }
+  .badge-card.locked .badge-name { color: var(--muted); }
+  .badge-req { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .profile-header {
+    background: linear-gradient(135deg, #001A33, #002B1A);
+    padding: 30px 20px 24px; text-align: center;
+    border-bottom: 2px solid var(--blue);
+  }
+  .avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--green));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 12px;
+    border: 3px solid var(--green);
+  }
+  .profile-name { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; }
+  .profile-level { display: inline-block; margin-top: 6px; background: var(--blue); padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+  .stats-row { display: flex; padding: 0 16px; gap: 10px; margin-top: 16px; }
+  .stat-box { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--green); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: var(--blue); color: white; padding: 12px 24px;
+    border-radius: 30px; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700; z-index: 999;
+    transition: transform .3s ease; white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,102,255,.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.8);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px 24px; width: 88%;
+    transform: scale(.9); transition: transform .2s; text-align: center;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+  .modal h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+  .modal p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .modal .big-emoji { font-size: 60px; margin-bottom: 12px; }
+  .modal-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    border: none; border-radius: 12px; color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px; font-weight: 700; cursor: pointer;
+  }
+
+  .diet-card { margin: 0 16px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .diet-card h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .diet-card p { font-size: 13px; color: var(--muted); }
+  .diet-card.locked-diet { opacity: .5; }
+  .diet-lock { font-size: 11px; color: var(--green); margin-top: 8px; font-weight: 600; }
+
+  .install-banner {
+    display: none;
+    margin: 12px 16px 0;
+    background: linear-gradient(135deg, #001A33, #002B1A);
+    border: 1px solid var(--green);
+    border-radius: 12px; padding: 12px 14px;
+    align-items: center; gap: 10px;
+  }
+  .install-banner.show { display: flex; }
+  .install-banner p { flex:1; font-size: 13px; color: var(--text); }
+  .install-banner button {
+    background: var(--green); border: none; border-radius: 8px;
+    padding: 8px 14px; color: #06241A;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* EXERCISE DETAIL SCREEN */
+  .detail-header {
+    position: relative;
+    background: linear-gradient(135deg, #001A33, #002B1A);
+    padding: 16px 16px 24px;
+    border-bottom: 2px solid var(--blue);
+  }
+  .back-btn {
+    background: rgba(255,255,255,.08); border: none; border-radius: 10px;
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    color: var(--text); cursor: pointer; margin-bottom: 14px;
+  }
+  .detail-img {
+    width: 100%; height: 180px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 80px; margin-bottom: 14px;
+  }
+  .detail-name { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; }
+  .detail-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .detail-pts-chip {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--green); color: #06241A;
+    padding: 6px 14px; border-radius: 20px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 16px;
+  }
+
+  .steps-list { padding: 16px; list-style: none; counter-reset: step; }
+  .steps-list li {
+    counter-increment: step;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 14px 14px 50px;
+    margin-bottom: 10px; position: relative; font-size: 14px; line-height: 1.4;
+  }
+  .steps-list li::before {
+    content: counter(step);
+    position: absolute; left: 14px; top: 14px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--green));
+    color: white; font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+
+  .start-btn {
+    margin: 8px 16px 20px; width: calc(100% - 32px);
+    padding: 16px;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    border: none; border-radius: 14px; color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px; font-weight: 900; letter-spacing: .05em;
+    cursor: pointer;
+  }
+
+  /* TIMER SCREEN */
+  .timer-screen {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+    text-align: center;
+  }
+  .timer-screen.rest { background: linear-gradient(180deg, #001A33, #0A0E14); }
+  .timer-screen.work { background: linear-gradient(180deg, #002B1A, #0A0E14); }
+  .timer-phase-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .timer-ex-name { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 30px; }
+  .timer-ring-wrap { position: relative; width: 240px; height: 240px; margin-bottom: 30px; }
+  .timer-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring-bg { fill: none; stroke: var(--border); stroke-width: 12; }
+  .timer-ring-fg { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset .3s linear; }
+  .timer-ring-fg.work { stroke: var(--green); }
+  .timer-ring-fg.rest { stroke: var(--blue); }
+  .timer-number {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 56px; font-weight: 900;
+  }
+  .timer-controls { display: flex; gap: 14px; }
+  .timer-btn {
+    padding: 14px 28px; border-radius: 14px; border: none;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer;
+  }
+  .timer-btn.primary { background: linear-gradient(90deg, var(--blue), var(--green)); color: white; }
+  .timer-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">FIT<span>GANA</span></div>
+      <div class="points-badge">🔥 <span id="pts-display">0</span> pts</div>
+    </div>
+    <div class="streak-bar">
+      <div>
+        <div class="streak-num" id="streak-num">0</div>
+        <div style="font-size:11px;color:var(--muted);">DÍAS</div>
+      </div>
+      <div style="width:2px;height:36px;background:var(--border);flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600" id="streak-label-text">¡Empieza hoy!</div>
+        <div style="font-size:12px;color:var(--muted)">racha de ejercicio</div>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-label" id="xp-label">0 / 500 XP</div>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="install-banner" id="install-banner">
+    <p>📲 Instala FitGana en tu celular</p>
+    <button onclick="installApp()">Instalar</button>
+  </div>
+
+  <div class="section-title">Categorías</div>
+  <div class="filters" id="filters">
+    <button class="filter-btn active" onclick="filterEx('all',this)">Todos</button>
+    <button class="filter-btn" onclick="filterEx('cardio',this)">🏃 Cardio</button>
+    <button class="filter-btn" onclick="filterEx('fuerza',this)">💪 Fuerza</button>
+    <button class="filter-btn" onclick="filterEx('yoga',this)">🧘 Yoga</button>
+  </div>
+
+  <div class="section-title">Ejercicios de hoy</div>
+  <div class="exercises-grid" id="exercises-grid"></div>
+</div>
+
+<!-- EXERCISE DETAIL -->
+<div class="screen" id="screen-detail">
+  <div class="detail-header">
+    <button class="back-btn" onclick="goTo('home', document.querySelector('nav button'))">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="detail-pts-chip" id="detail-pts">0 pts</div>
+    <div class="detail-img" id="detail-img"></div>
+    <div class="detail-name" id="detail-name">Ejercicio</div>
+    <div class="detail-meta" id="detail-meta">3 sets x 10 reps</div>
+  </div>
+  <div class="section-title">Cómo hacerlo</div>
+  <ul class="steps-list" id="detail-steps"></ul>
+  <button class="start-btn" id="detail-start-btn" onclick="startTimerFlow()">▶ Empezar ejercicio</button>
+</div>
+
+<!-- TIMER WORK -->
+<div class="screen" id="screen-timer-work">
+  <div class="timer-screen work">
+    <div class="timer-phase-label">🟢 Ejercicio</div>
+    <div class="timer-ex-name" id="timer-work-name">Burpees</div>
+    <div class="timer-ring-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="timer-ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="timer-ring-fg work" id="ring-work" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-number" id="timer-work-display">00:45</div>
+    </div>
+    <div class="timer-controls">
+      <button class="timer-btn secondary" onclick="pauseResumeTimer()" id="work-pause-btn">⏸ Pausar</button>
+    </div>
+    <p style="color:var(--muted);font-size:12px;margin-top:16px;">Los puntos se otorgan al completar el tiempo completo</p>
+  </div>
+</div>
+
+<!-- TIMER REST -->
+<div class="screen" id="screen-timer-rest">
+  <div class="timer-screen rest">
+    <div class="timer-phase-label">🔵 Descanso</div>
+    <div class="timer-ex-name">Recupera el aliento</div>
+    <div class="timer-ring-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="timer-ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="timer-ring-fg rest" id="ring-rest" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-number" id="timer-rest-display">00:30</div>
+    </div>
+    <div class="timer-controls">
+      <button class="timer-btn secondary" onclick="skipRest()">⏭ Saltar descanso</button>
+    </div>
+  </div>
+</div>
+
+<!-- REWARDS -->
+<div class="screen" id="screen-rewards">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">FIT<span>GANA</span></div>
+      <div class="points-badge">🔥 <span id="pts-display2">0</span> pts</div>
+    </div>
+  </div>
+  <div class="section-title">⭐ Recompensa VIP</div>
+  <div class="vip-card">
+    <div class="vip-badge">👑 EXCLUSIVO</div>
+    <div class="vip-title">Acceso VIP<br>7 días gratis</div>
+    <ul class="vip-perks">
+      <li>Rutinas premium desbloqueadas</li>
+      <li>Planes de dieta personalizados</li>
+      <li>Sin anuncios por 7 días</li>
+      <li>Insignia VIP en tu perfil</li>
+    </ul>
+    <div class="vip-timer" id="vip-timer">⏳ Oferta limitada</div>
+    <button class="claim-btn" id="vip-btn" onclick="claimVIP()">🔥 Canjear por 1500 pts</button>
+  </div>
+  <div class="section-title">🥗 Planes de Dieta</div>
+  <div id="diet-section"></div>
+  <div class="section-title">🎁 Otras Recompensas</div>
+  <div class="rewards-grid" id="rewards-grid"></div>
+</div>
+
+<!-- BADGES -->
+<div class="screen" id="screen-badges">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">FIT<span>GANA</span></div>
+      <div class="points-badge">🔥 <span id="pts-display3">0</span> pts</div>
+    </div>
+  </div>
+  <div class="section-title">Tus Medallas</div>
+  <div class="badges-grid" id="badges-grid"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="screen" id="screen-profile">
+  <div class="profile-header">
+    <div class="avatar">🏋️</div>
+    <div class="profile-name">Atleta</div>
+    <div class="profile-level" id="profile-level">Nivel 1 · Principiante</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-num" id="stat-pts">0</div><div class="stat-lbl">Puntos totales</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-ex">0</div><div class="stat-lbl">Ejercicios hechos</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-streak">0</div><div class="stat-lbl">Racha (días)</div></div>
+  </div>
+  <div class="section-title">Historial reciente</div>
+  <div id="history-list" style="padding:0 16px;"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <button class="active" onclick="goTo('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Inicio
+  </button>
+  <button onclick="goTo('rewards',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+    Canjear
+  </button>
+  <button onclick="goTo('badges',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Medallas
+  </button>
+  <button onclick="goTo('profile',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Perfil
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="big-emoji" id="modal-emoji">🎉</div>
+    <h2 id="modal-title">¡Genial!</h2>
+    <p id="modal-body">Texto aquí</p>
+    <button class="modal-btn" onclick="closeModal()">¡Entendido!</button>
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(e => console.log('SW error', e));
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('show');
+});
+function installApp() {
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; }); }
+}
+
+const EXERCISES = [
+  { id:'e1', name:'Burpees', cat:'cardio', icon:'🏃', bg:'#001A33', pts:50, sets:'3 sets × 10 reps', desc:'Quema grasa máxima', duration:45,
+    steps:['Ponte de pie con los pies separados al ancho de cadera.','Baja en cuclillas y coloca las manos en el suelo.','Salta llevando los pies hacia atrás en posición de plancha.','Haz una flexión opcional, luego salta los pies de vuelta a cuclillas.','Salta hacia arriba con los brazos extendidos. Repite sin pausa.'] },
+  { id:'e2', name:'Saltar cuerda', cat:'cardio', icon:'⚡', bg:'#002B1A', pts:40, sets:'5 min continuo', desc:'Cardio intenso', duration:60,
+    steps:['Sostén la cuerda con ambas manos a la altura de la cadera.','Gira la cuerda usando las muñecas, no los brazos.','Salta apenas unos centímetros del suelo al pasar la cuerda.','Mantén un ritmo constante y la espalda recta.','Aterriza suave sobre la punta de los pies.'] },
+  { id:'e3', name:'Sentadillas', cat:'fuerza', icon:'💪', bg:'#001A33', pts:45, sets:'4 sets × 15 reps', desc:'Piernas y glúteos', duration:40,
+    steps:['Pies separados al ancho de hombros, espalda recta.','Baja flexionando rodillas como si te sentaras en una silla.','Baja hasta que los muslos estén paralelos al suelo.','Empuja con los talones para volver a subir.','Mantén el core activado durante todo el movimiento.'] },
+  { id:'e4', name:'Flexiones', cat:'fuerza', icon:'🔥', bg:'#002B1A', pts:40, sets:'3 sets × 12 reps', desc:'Pecho y tríceps', duration:40,
+    steps:['Colócate en posición de plancha, manos bajo los hombros.','Mantén el cuerpo recto desde la cabeza hasta los pies.','Baja el pecho hacia el suelo flexionando los codos.','Empuja hacia arriba hasta extender los brazos por completo.','Respira al bajar y exhala al subir.'] },
+  { id:'e5', name:'Plancha', cat:'fuerza', icon:'⚡', bg:'#001A33', pts:35, sets:'3 × 45 seg', desc:'Core y estabilidad', duration:45,
+    steps:['Apóyate en antebrazos y puntas de los pies.','Mantén el cuerpo en línea recta, sin elevar la cadera.','Activa el abdomen y los glúteos.','Mira hacia el suelo para mantener el cuello neutro.','Aguanta sin perder la forma durante todo el tiempo.'] },
+  { id:'e6', name:'Dominadas', cat:'fuerza', icon:'🏋️', bg:'#002B1A', pts:60, sets:'3 sets × 8 reps', desc:'Espalda y bíceps', duration:30,
+    steps:['Agárrate a la barra con las palmas hacia adelante.','Cuelga con los brazos extendidos por completo.','Tira de tu cuerpo hacia arriba hasta que el mentón pase la barra.','Baja de forma controlada sin soltarte de golpe.','Evita balancear el cuerpo para usar solo la fuerza de brazos.'] },
+  { id:'e7', name:'Correr 2km', cat:'cardio', icon:'🏃', bg:'#001A33', pts:70, sets:'A tu ritmo', desc:'Resistencia cardio', duration:90,
+    steps:['Calienta caminando rápido 2-3 minutos antes de empezar.','Mantén una postura erguida y mirada al frente.','Respira de forma rítmica, inhala por nariz y exhala por boca.','Mantén un ritmo constante que puedas sostener.','Enfría caminando los últimos minutos.'] },
+  { id:'e8', name:'Postura del guerrero', cat:'yoga', icon:'🧘', bg:'#002B1A', pts:30, sets:'5 min por lado', desc:'Fuerza y equilibrio', duration:60,
+    steps:['Da un paso largo hacia adelante con un pie.','Flexiona la rodilla delantera a 90 grados.','Extiende los brazos hacia arriba o a los lados.','Mantén la mirada al frente y respira profundo.','Sostén la postura y repite del otro lado.'] },
+  { id:'e9', name:'Saludo al sol', cat:'yoga', icon:'☀️', bg:'#001A33', pts:35, sets:'10 repeticiones', desc:'Flexibilidad total', duration:60,
+    steps:['Empieza de pie con las manos juntas frente al pecho.','Inhala y eleva los brazos por encima de la cabeza.','Exhala y dobla el torso hacia adelante.','Da un paso atrás hacia plancha y baja al suelo.','Sube en cobra y vuelve a la posición inicial.'] },
+  { id:'e10', name:'Meditación activa', cat:'yoga', icon:'🌟', bg:'#002B1A', pts:25, sets:'10 minutos', desc:'Mente y cuerpo', duration:120,
+    steps:['Siéntate cómodo con la espalda recta.','Cierra los ojos y relaja los hombros.','Enfócate en tu respiración, inhala y exhala lento.','Si tu mente se distrae, vuelve a enfocarte en la respiración.','Termina abriendo los ojos lentamente.'] },
+];
+
+const REWARDS = [
+  { id:'r1', name:'Título "Guerrero del Fuego"', icon:'🔥', pts:150, desc:'Muestra tu título en el perfil' },
+  { id:'r2', name:'Título "Atleta Pro"', icon:'🏆', pts:250, desc:'Demuestra tu nivel elite' },
+  { id:'r3', name:'Racha protegida 3 días', icon:'🛡️', pts:100, desc:'Tu racha no se rompe por 3 días' },
+  { id:'r4', name:'Modo oscuro premium', icon:'🌙', pts:80, desc:'Tema oscuro exclusivo activado' },
+];
+
+const BADGES = [
+  { id:'b1', name:'Primera Llama', emoji:'🔥', req:'Completa tu 1er ejercicio', unlock: s => s.totalEx >= 1 },
+  { id:'b2', name:'Calentando', emoji:'💪', req:'5 ejercicios completados', unlock: s => s.totalEx >= 5 },
+  { id:'b3', name:'En Llamas', emoji:'🌋', req:'20 ejercicios completados', unlock: s => s.totalEx >= 20 },
+  { id:'b4', name:'Racha de Fuego', emoji:'⚡', req:'Racha de 3 días', unlock: s => s.streak >= 3 },
+  { id:'b5', name:'Semana Perfecta', emoji:'🏅', req:'Racha de 7 días', unlock: s => s.streak >= 7 },
+  { id:'b6', name:'Maestro Cardio', emoji:'🏃', req:'500 puntos de cardio', unlock: s => (s.catPts?.cardio||0) >= 500 },
+  { id:'b7', name:'Bestia de Fuerza', emoji:'🦁', req:'500 puntos de fuerza', unlock: s => (s.catPts?.fuerza||0) >= 500 },
+  { id:'b8', name:'Alma Zen', emoji:'🧘', req:'300 puntos de yoga', unlock: s => (s.catPts?.yoga||0) >= 300 },
+  { id:'b9', name:'Rico en Puntos', emoji:'💰', req:'Acumula 1000 puntos', unlock: s => s.totalPts >= 1000 },
+  { id:'b10', name:'VIP de Élite', emoji:'👑', req:'Canjea el VIP', unlock: s => s.claimedVIP },
+];
+
+const DIET_PLANS = [
+  { name:'Plan Quema Grasa', emoji:'🥗', desc:'Dieta baja en carbohidratos. 1800 kcal/día.', pts:0, free:true },
+  { name:'Plan Masa Muscular', emoji:'🥩', desc:'Alta proteína para ganar músculo. 2500 kcal.', pts:200 },
+  { name:'Plan Vegano Activo', emoji:'🌱', desc:'Nutrición vegana completa para atletas.', pts:250 },
+  { name:'Plan Energía Total', emoji:'⚡', desc:'Carbohidratos complejos para máximo rendimiento.', pts:300 },
+];
+
+let state = JSON.parse(localStorage.getItem('fitpoints_state') || 'null') || {
+  pts:0, totalPts:0, streak:0, totalEx:0,
+  lastDay:null, doneTodayIds:[],
+  catPts:{cardio:0,fuerza:0,yoga:0},
+  claimed:{}, claimedVIP:false, history:[]
+};
+
+function save() { localStorage.setItem('fitpoints_state', JSON.stringify(state)); }
+
+function checkDay() {
+  const today = new Date().toDateString();
+  if (state.lastDay !== today && state.doneTodayIds.length > 0) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    state.streak = (state.lastDay === yesterday.toDateString()) ? state.streak+1 : 1;
+    state.lastDay = today; state.doneTodayIds = [];
+  }
+}
+checkDay();
+
+let currentFilter = 'all';
+let currentExercise = null;
+
+function renderHome() {
+  document.getElementById('pts-display').textContent = state.pts;
+  const lvl = getLevel();
+  document.getElementById('streak-num').textContent = state.streak;
+  document.getElementById('streak-label-text').textContent = state.streak > 0 ? `¡${state.streak} día${state.streak>1?'s':''} seguido!` : '¡Empieza hoy!';
+  document.getElementById('xp-fill').style.width = Math.min(100,(state.pts%500)/500*100)+'%';
+  document.getElementById('xp-label').textContent = `${state.pts%500} / 500 XP · Nivel ${lvl.level}`;
+  const grid = document.getElementById('exercises-grid');
+  grid.innerHTML = '';
+  const filtered = currentFilter==='all' ? EXERCISES : EXERCISES.filter(e=>e.cat===currentFilter);
+  filtered.forEach(ex => {
+    const done = state.doneTodayIds.includes(ex.id);
+    const card = document.createElement('div');
+    card.className = 'ex-card'+(done?' done':'');
+    card.onclick = () => openDetail(ex);
+    card.innerHTML = `<div class="ex-icon" style="background:${ex.bg}">${ex.icon}</div><div class="ex-info"><div class="ex-name">${ex.name}</div><div class="ex-meta">${ex.sets} · ${ex.desc}</div></div><div class="ex-pts">${ex.pts}<span>pts</span></div><div class="ex-arrow">›</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function filterEx(cat,btn) {
+  currentFilter=cat;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderHome();
+}
+
+function openDetail(ex) {
+  currentExercise = ex;
+  document.getElementById('detail-img').style.background = ex.bg;
+  document.getElementById('detail-img').textContent = ex.icon;
+  document.getElementById('detail-name').textContent = ex.name;
+  document.getElementById('detail-meta').textContent = ex.sets + ' · ' + ex.desc;
+  document.getElementById('detail-pts').textContent = ex.pts + ' pts';
+  const stepsList = document.getElementById('detail-steps');
+  stepsList.innerHTML = ex.steps.map(s => `<li>${s}</li>`).join('');
+  const done = state.doneTodayIds.includes(ex.id);
+  const btn = document.getElementById('detail-start-btn');
+  btn.textContent = done ? '✓ Ya completado hoy' : '▶ Empezar ejercicio';
+  btn.disabled = done;
+  btn.style.opacity = done ? 0.5 : 1;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-detail').classList.add('active');
+}
+
+// TIMER LOGIC
+let timerInterval = null;
+let timerSeconds = 0;
+let timerTotal = 0;
+let timerPaused = false;
+const RING_CIRC = 276;
+
+function startTimerFlow() {
+  if (!currentExercise) return;
+  timerTotal = currentExercise.duration;
+  timerSeconds = timerTotal;
+  timerPaused = false;
+  document.getElementById('timer-work-name').textContent = currentExercise.name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-timer-work').classList.add('active');
+  document.getElementById('work-pause-btn').textContent = '⏸ Pausar';
+  updateWorkRing();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (timerPaused) return;
+    timerSeconds--;
+    if (timerSeconds <= 0) { clearInterval(timerInterval); finishWork(); return; }
+    updateWorkRing();
+  }, 1000);
+}
+
+function updateWorkRing() {
+  const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+  const s = String(timerSeconds%60).padStart(2,'0');
+  document.getElementById('timer-work-display').textContent = `${m}:${s}`;
+  const offset = RING_CIRC * (1 - timerSeconds/timerTotal);
+  document.getElementById('ring-work').style.strokeDashoffset = offset;
+}
+
+function pauseResumeTimer() {
+  timerPaused = !timerPaused;
+  document.getElementById('work-pause-btn').textContent = timerPaused ? '▶ Reanudar' : '⏸ Pausar';
+}
+
+function finishWork() {
+  clearInterval(timerInterval);
+  completeExercise(currentExercise);
+  startRestTimer();
+}
+
+function startRestTimer() {
+  const restDuration = 30;
+  timerSeconds = restDuration;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-timer-rest').classList.add('active');
+  updateRestRing(restDuration);
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    if (timerSeconds <= 0) { clearInterval(timerInterval); endRestAndGoHome(); return; }
+    updateRestRing(restDuration);
+  }, 1000);
+}
+
+function updateRestRing(total) {
+  const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+  const s = String(timerSeconds%60).padStart(2,'0');
+  document.getElementById('timer-rest-display').textContent = `${m}:${s}`;
+  const offset = RING_CIRC * (1 - timerSeconds/total);
+  document.getElementById('ring-rest').style.strokeDashoffset = offset;
+}
+
+function skipRest() {
+  clearInterval(timerInterval);
+  endRestAndGoHome();
+}
+
+function endRestAndGoHome() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-home').classList.add('active');
+  document.querySelectorAll('nav button').forEach((b,i) => b.classList.toggle('active', i===0));
+  renderHome();
+  showModal('💪', '¡Sesión completa!', '¡Excelente trabajo! Sigue así para mantener tu racha.');
+}
+
+function completeExercise(ex) {
+  state.pts+=ex.pts; state.totalPts+=ex.pts; state.totalEx++;
+  state.catPts[ex.cat]=(state.catPts[ex.cat]||0)+ex.pts;
+  state.doneTodayIds.push(ex.id);
+  const today=new Date().toDateString();
+  if(state.lastDay!==today){
+    const y=new Date(); y.setDate(y.getDate()-1);
+    state.streak=(state.lastDay===y.toDateString())?state.streak+1:1;
+    state.lastDay=today;
+  }
+  state.history.unshift({name:ex.name,pts:ex.pts,date:new Date().toLocaleDateString('es')});
+  if(state.history.length>20) state.history.pop();
+  save(); showToast(`+${ex.pts} pts · ${ex.name} ✓`); checkBadges(); updateAllPoints();
+}
+
+function getLevel() {
+  const lvls=[{level:1,name:'Principiante',min:0},{level:2,name:'Activo',min:200},{level:3,name:'Guerrero',min:500},{level:4,name:'Campeón',min:1000},{level:5,name:'Élite',min:2000}];
+  let cur=lvls[0]; for(const l of lvls){if(state.totalPts>=l.min) cur=l;} return cur;
+}
+
+function renderRewards() {
+  document.getElementById('pts-display2').textContent=state.pts;
+  const vipBtn=document.getElementById('vip-btn');
+  if(state.claimedVIP){vipBtn.textContent='✓ VIP Activo';vipBtn.classList.add('claimed');vipBtn.disabled=true;}
+  else if(state.pts<1500){vipBtn.textContent=`🔒 Necesitas ${1500-state.pts} pts más`;vipBtn.disabled=true;}
+  else{vipBtn.textContent='🔥 Canjear por 1500 pts';vipBtn.disabled=false;}
+  const now=new Date(),end=new Date();end.setHours(23,59,59);
+  const diff=end-now;
+  const h=String(Math.floor(diff/3600000)).padStart(2,'0');
+  const m=String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  const s=String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+  document.getElementById('vip-timer').innerHTML=`⏳ Oferta hoy: quedan <strong>${h}:${m}:${s}</strong>`;
+  const dietSec=document.getElementById('diet-section');
+  dietSec.innerHTML='';
+  DIET_PLANS.forEach(d=>{
+    const unlocked=d.free||state.claimed['diet_'+d.name]||state.claimedVIP;
+    const div=document.createElement('div');
+    div.className='diet-card'+((!unlocked)?' locked-diet':'');
+    div.innerHTML=`<h3>${d.emoji} ${d.name}</h3><p>${d.desc}</p>`;
+    if(!unlocked) div.innerHTML+=`<div class="diet-lock">🔒 Canjear por ${d.pts} pts o activa VIP</div>`;
+    if(!unlocked&&!d.free){const btn=document.createElement('button');btn.className='claim-btn';btn.style.marginTop='10px';btn.textContent=state.pts>=d.pts?`Canjear · ${d.pts} pts`:`Necesitas ${d.pts-state.pts} pts más`;btn.disabled=state.pts<d.pts;btn.onclick=()=>claimDiet(d);div.appendChild(btn);}
+    dietSec.appendChild(div);
+  });
+  const grid=document.getElementById('rewards-grid');
+  grid.innerHTML='';
+  REWARDS.forEach(r=>{
+    const claimed=state.claimed[r.id],canClaim=state.pts>=r.pts;
+    const div=document.createElement('div');
+    div.className='reward-card';
+    div.innerHTML=`<div class="reward-icon">${r.icon}</div><div class="reward-info"><div class="reward-name">${r.name}</div><div class="reward-desc">${r.desc}</div><button class="claim-btn ${claimed?'claimed':''}" ${claimed||!canClaim?'disabled':''} onclick="claimReward('${r.id}')">${claimed?'✓ Canjeado':canClaim?`Canjear · ${r.pts} pts`:`🔒 Faltan ${r.pts-state.pts} pts`}</button></div>`;
+    grid.appendChild(div);
+  });
+}
+
+function claimVIP(){if(state.pts<1500||state.claimedVIP)return;state.pts-=1500;state.claimedVIP=true;save();showModal('👑','¡Eres VIP!','Acceso premium activado por 7 días.');checkBadges();renderRewards();updateAllPoints();}
+function claimDiet(d){if(state.pts<d.pts||state.claimed['diet_'+d.name])return;state.pts-=d.pts;state.claimed['diet_'+d.name]=true;save();showToast(`Plan "${d.name}" desbloqueado 🥗`);renderRewards();updateAllPoints();}
+function claimReward(id){const r=REWARDS.find(x=>x.id===id);if(!r||state.pts<r.pts||state.claimed[id])return;state.pts-=r.pts;state.claimed[id]=true;save();showModal(r.icon,`¡${r.name}!`,`Recompensa canjeada. ¡Sigue entrenando!`);renderRewards();updateAllPoints();}
+
+function renderBadges(){
+  document.getElementById('pts-display3').textContent=state.pts;
+  const grid=document.getElementById('badges-grid');grid.innerHTML='';
+  BADGES.forEach(b=>{const unlocked=b.unlock(state);const div=document.createElement('div');div.className='badge-card'+(unlocked?' unlocked':' locked');div.innerHTML=`<div class="badge-emoji">${b.emoji}</div><div class="badge-name">${b.name}</div><div class="badge-req">${b.req}</div>`;grid.appendChild(div);});
+}
+
+function renderProfile(){
+  const lvl=getLevel();
+  document.getElementById('profile-level').textContent=`Nivel ${lvl.level} · ${lvl.name}`;
+  document.getElementById('stat-pts').textContent=state.pts;
+  document.getElementById('stat-ex').textContent=state.totalEx;
+  document.getElementById('stat-streak').textContent=state.streak;
+  const hist=document.getElementById('history-list');
+  hist.innerHTML=state.history.length===0?'<p style="color:var(--muted);font-size:14px;padding-bottom:16px">¡Completa ejercicios para ver tu historial!</p>':state.history.slice(0,8).map(h=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:14px">${h.name}</span><span style="font-family:\'Barlow Condensed\';color:var(--green);font-size:16px;font-weight:700">+${h.pts} pts</span></div>`).join('');
+}
+
+function checkBadges(){BADGES.forEach(b=>{if(b.unlock(state)&&!state.claimed['badge_'+b.id]){state.claimed['badge_'+b.id]=true;setTimeout(()=>showModal(b.emoji,'¡Medalla desbloqueada!',`Has conseguido: "${b.name}"`),800);}});}
+function updateAllPoints(){['pts-display','pts-display2','pts-display3','stat-pts'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=state.pts;});}
+function goTo(screen,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.getElementById('screen-'+screen).classList.add('active');if(btn)btn.classList.add('active');if(screen==='home')renderHome();if(screen==='rewards')renderRewards();if(screen==='badges')renderBadges();if(screen==='profile')renderProfile();}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function showModal(emoji,title,body){document.getElementById('modal-emoji').textContent=emoji;document.getElementById('modal-title').textContent=title;document.getElementById('modal-body').textContent=body;document.getElementById('modal').classList.add('show');}
+function closeModal(e){if(!e||e.target===document.getElementById('modal')||e.currentTarget.tagName==='BUTTON')document.getElementById('modal').classList.remove('show');}
+
+setInterval(()=>{if(document.getElementById('screen-rewards').classList.contains('active')){const now=new Date(),end=new Date();end.setHours(23,59,59);const diff=end-now;const h=String(Math.floor(diff/3600000)).padStart(2,'0');const m=String(Math.floor((diff%3600000)/60000)).padStart(2,'0');const s=String(Math.floor((diff%60000)/1000)).padStart(2,'0');const el=document.getElementById('vip-timer');if(el)el.innerHTML=`⏳ Oferta hoy: quedan <strong>${h}:${m}:${s}</strong>`;}},1000);
+
+renderHome();
+</script>
+</body>
+</html>
