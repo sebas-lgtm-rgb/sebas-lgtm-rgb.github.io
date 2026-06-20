@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FitGana</title>
+<style>
+  :root{
+    --bg: #0B0F0D;
+    --card: #161B19;
+    --card-hi: #1E2522;
+    --line: #262E2A;
+    --green: #39FF6A;
+    --green-dim: #1E7A3E;
+    --blue: #2D5FB0;
+    --amber: #F5A623;
+    --text: #EAF2EC;
+    --text-dim: #8FA098;
+    --danger: #FF5C5C;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',-apple-system,sans-serif; height:100%; overflow-x:hidden;}
+  @font-face{font-family:'Archivo Black'; src:local('Archivo Black');}
+
+  #app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative;}
+
+  /* ---------- HEADER ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 18px 14px;
+    background:linear-gradient(180deg, #0F1A14, #0B0F0D);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{font-family:'Archivo Black', Inter, sans-serif; font-size:22px; letter-spacing:0.5px;}
+  .brand .fit{color:var(--text);}
+  .brand .gana{color:var(--green);}
+  .pts-chip{
+    background:linear-gradient(135deg, var(--blue), #1B3A6B);
+    color:#fff; padding:8px 14px; border-radius:999px; font-weight:700; font-size:14px;
+    display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(45,95,176,0.35);
+  }
+
+  /* ---------- STREAK BANNER ---------- */
+  .streak-banner{
+    margin:14px 16px 4px; padding:16px;
+    background:linear-gradient(135deg, #102017, #0B0F0D);
+    border:1px solid var(--green-dim); border-radius:14px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .streak-num{font-family:'Archivo Black', sans-serif; font-size:30px; color:var(--green); line-height:1;}
+  .streak-info{flex:1;}
+  .streak-info .label{font-weight:700; font-size:14px;}
+  .streak-info .sub{font-size:12px; color:var(--text-dim); margin-top:2px;}
+  .xp-bar-track{height:6px; background:#0B0F0D; border-radius:4px; margin-top:8px; overflow:hidden; border:1px solid var(--line);}
+  .xp-bar-fill{height:100%; background:linear-gradient(90deg, var(--blue), var(--green)); border-radius:4px; transition:width .4s ease;}
+  .xp-label{font-size:11px; color:var(--text-dim); margin-top:4px;}
+
+  /* ---------- TABS CONTENT ---------- */
+  .screen{padding:16px; padding-bottom:90px; flex:1;}
+  .section-title{font-size:12px; letter-spacing:1.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700; margin:18px 4px 10px;}
+
+  .cat-row{display:flex; gap:8px; overflow-x:auto; padding:4px 0;}
+  .cat-pill{
+    flex-shrink:0; padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); color:var(--text-dim); font-size:13px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .cat-pill.active{background:var(--green); color:#0B0F0D; border-color:var(--green);}
+
+  .ex-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin-bottom:10px; display:flex; align-items:center; gap:12px;
+    transition:border-color .2s;
+  }
+  .ex-card.done{border-color:var(--green-dim); background:#10231A;}
+  .ex-icon{
+    width:48px; height:48px; border-radius:10px; background:var(--card-hi);
+    display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;
+  }
+  .ex-info{flex:1; min-width:0;}
+  .ex-name{font-weight:700; font-size:15px;}
+  .ex-sub{font-size:12px; color:var(--text-dim); margin-top:2px;}
+  .ex-action{flex-shrink:0; text-align:right;}
+  .btn-go{
+    background:var(--green); color:#0B0F0D; border:none; padding:9px 14px; border-radius:8px;
+    font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap;
+  }
+  .btn-done{
+    background:var(--green-dim); color:var(--green); border:1px solid var(--green-dim);
+    padding:9px 14px; border-radius:8px; font-weight:700; font-size:12px; display:flex; align-items:center; gap:4px;
+  }
+  .pts-tag{font-size:11px; color:var(--amber); font-weight:700; margin-top:3px;}
+
+  /* ---------- REWARDS ---------- */
+  .vip-card{
+    background:linear-gradient(160deg, #102017, #0B0F0D); border:1px solid var(--green); border-radius:16px;
+    padding:18px; margin-bottom:16px;
+  }
+  .exclusive-tag{
+    display:inline-flex; align-items:center; gap:5px; background:var(--green); color:#0B0F0D;
+    font-size:11px; font-weight:800; padding:5px 10px; border-radius:999px; margin-bottom:10px;
+  }
+  .vip-title{font-family:'Archivo Black', sans-serif; font-size:22px; line-height:1.15; margin-bottom:10px;}
+  .vip-feat{font-size:13px; color:var(--text-dim); margin:5px 0; display:flex; gap:8px;}
+  .lock-btn{
+    width:100%; background:#0B0F0D; border:1px solid var(--line); color:var(--text-dim);
+    padding:12px; border-radius:10px; margin-top:14px; font-weight:700; font-size:13px;
+  }
+  .lock-btn.unlocked{background:var(--green); color:#0B0F0D; border:none; cursor:pointer;}
+
+  .reward-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px;
+  }
+  .reward-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .reward-name{font-weight:700; font-size:15px;}
+  .reward-desc{font-size:12px; color:var(--text-dim); margin-top:3px;}
+  .reward-cost{font-size:12px; color:var(--amber); font-weight:700; white-space:nowrap;}
+  .reward-btn{
+    margin-top:10px; width:100%; padding:10px; border-radius:8px; border:none; font-weight:700; font-size:13px;
+    background:var(--green); color:#0B0F0D; cursor:pointer;
+  }
+  .reward-btn:disabled{background:#222; color:var(--text-dim); cursor:not-allowed;}
+  .sim-note{font-size:10px; color:var(--text-dim); margin-top:6px; text-align:center; font-style:italic;}
+
+  /* ---------- MEDALS ---------- */
+  .medal-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .medal-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center;
+  }
+  .medal-card.earned{border-color:var(--green-dim);}
+  .medal-emoji{font-size:32px; display:block; margin-bottom:8px; filter:grayscale(1) opacity(0.4);}
+  .medal-card.earned .medal-emoji{filter:none;}
+  .medal-name{font-weight:700; font-size:13px;}
+  .medal-desc{font-size:11px; color:var(--text-dim); margin-top:3px;}
+
+  /* ---------- PROFILE ---------- */
+  .profile-head{text-align:center; padding:20px 0 10px;}
+  .avatar-circle{
+    width:90px; height:90px; border-radius:50%; margin:0 auto 12px;
+    background:linear-gradient(135deg, var(--blue), var(--green));
+    display:flex; align-items:center; justify-content:center; font-size:38px;
+  }
+  .profile-name{font-family:'Archivo Black', sans-serif; font-size:22px;}
+  .level-chip{
+    display:inline-block; background:var(--blue); color:#fff; font-size:12px; font-weight:700;
+    padding:5px 12px; border-radius:999px; margin-top:6px;
+  }
+  .stat-row{display:flex; gap:10px; margin:18px 0;}
+  .stat-box{flex:1; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center;}
+  .stat-num{font-family:'Archivo Black', sans-serif; font-size:24px; color:var(--green);}
+  .stat-label{font-size:11px; color:var(--text-dim); margin-top:4px;}
+  .hist-row{display:flex; justify-content:space-between; padding:12px 4px; border-bottom:1px solid var(--line); font-size:14px;}
+  .hist-pts{color:var(--green); font-weight:700;}
+  .reset-btn{
+    width:100%; margin-top:20px; padding:12px; background:transparent; border:1px solid var(--danger);
+    color:var(--danger); border-radius:10px; font-weight:600; font-size:13px;
+  }
+
+  /* ---------- BOTTOM NAV ---------- */
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+    background:#0E1310; border-top:1px solid var(--line);
+    display:flex; justify-content:space-around; padding:10px 0 max(10px, env(safe-area-inset-bottom));
+    z-index:50;
+  }
+  .nav-btn{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-dim); font-size:11px; font-weight:600; background:none; border:none;}
+  .nav-btn.active{color:var(--green);}
+  .nav-icon{font-size:20px;}
+
+  /* ---------- EXERCISE LIBRARY / DETAIL ---------- */
+  .lib-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:12px; cursor:pointer;
+  }
+  .lib-img{
+    height:140px; display:flex; align-items:center; justify-content:center; font-size:56px;
+    background:linear-gradient(135deg, var(--card-hi), #0B0F0D);
+  }
+  .lib-body{padding:12px 14px;}
+  .lib-name{font-weight:700; font-size:15px;}
+  .lib-meta{font-size:12px; color:var(--text-dim); margin-top:3px;}
+  .eq-tag{
+    display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; margin-top:6px;
+  }
+  .eq-tag.bw{background:#1E2A3A; color:#7FB3FF;}
+  .eq-tag.dumbbell{background:#2A1E1E; color:#FF9F7F;}
+
+  /* ---------- WORKOUT MODE (full screen) ---------- */
+  .workout-screen{
+    position:fixed; inset:0; background:var(--bg); z-index:100;
+    display:flex; flex-direction:column; max-width:480px; margin:0 auto;
+  }
+  .wo-close{
+    position:absolute; top:18px; right:18px; z-index:5; background:var(--card); border:1px solid var(--line);
+    color:var(--text); width:36px; height:36px; border-radius:50%; font-size:16px; display:flex; align-items:center; justify-content:center;
+  }
+  .wo-phase-label{
+    text-align:center; margin-top:60px; font-size:13px; letter-spacing:2px; text-transform:uppercase; font-weight:700;
+  }
+  .wo-phase-label.work{color:var(--green);}
+  .wo-phase-label.rest{color:var(--blue);}
+  .wo-ex-name{text-align:center; font-family:'Archivo Black', sans-serif; font-size:26px; margin:8px 0 30px; padding:0 20px;}
+
+  .timer-ring-wrap{position:relative; width:230px; height:230px; margin:0 auto;}
+  .timer-ring-wrap svg{width:100%; height:100%; transform:rotate(-90deg);}
+  .timer-ring-bg{fill:none; stroke:var(--card); stroke-width:10;}
+  .timer-ring-fg{fill:none; stroke-width:10; stroke-linecap:round; transition:stroke .3s;}
+  .timer-ring-fg.work{stroke:var(--green);}
+  .timer-ring-fg.rest{stroke:var(--blue);}
+  .timer-center{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .timer-num{font-family:'Archivo Black', sans-serif; font-size:64px; line-height:1;}
+  .timer-sub{font-size:13px; color:var(--text-dim); margin-top:4px;}
+
+  .wo-illustration{font-size:64px; text-align:center; margin:20px 0;}
+  .wo-instructions{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin:16px 20px;
+    font-size:13px; color:var(--text-dim); line-height:1.5;
+  }
+  .wo-controls{display:flex; gap:12px; padding:20px; margin-top:auto;}
+  .wo-btn{
+    flex:1; padding:14px; border-radius:12px; border:none; font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .wo-btn.primary{background:var(--green); color:#0B0F0D;}
+  .wo-btn.secondary{background:var(--card); color:var(--text); border:1px solid var(--line);}
+  .wo-progress-dots{display:flex; justify-content:center; gap:6px; margin-top:14px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--line);}
+  .dot.done{background:var(--green);}
+  .dot.current{background:var(--amber);}
+
+  .wo-summary{
+    text-align:center; margin:auto; padding:30px;
+  }
+  .wo-summary .big-emoji{font-size:64px;}
+  .wo-summary h2{font-family:'Archivo Black', sans-serif; font-size:26px; margin:12px 0 4px;}
+  .wo-summary .pts-earned{font-size:36px; color:var(--amber); font-weight:800; margin:14px 0;}
+
+  .toast{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--card);
+    border:1px solid var(--green); color:var(--text); padding:12px 20px; border-radius:10px; font-size:13px;
+    font-weight:600; z-index:200; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;
+    max-width:90%; text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+  .hidden{display:none !important;}
+  ::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ TOPBAR ============ -->
+  <div class="topbar">
+    <div class="brand"><span class="fit">FIT</span><span class="gana">GANA</span></div>
+    <div class="pts-chip">🔥 <span id="pts-display">0</span> pts</div>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <div class="screen" id="screen-home">
+    <div class="streak-banner">
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-info">
+        <div class="label">¡<span id="streak-text">0 días</span> seguido!</div>
+        <div class="sub">racha de ejercicio</div>
+        <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-fill" style="width:0%"></div></div>
+        <div class="xp-label"><span id="xp-current">0</span> / <span id="xp-needed">500</span> XP · Nivel <span id="level-num">1</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Categorías</div>
+    <div class="cat-row" id="cat-row"></div>
+
+    <div class="section-title">Ejercicios de hoy</div>
+    <div id="exercise-list"></div>
+  </div>
+
+  <!-- ============ LIBRARY ============ -->
+  <div class="screen hidden" id="screen-library">
+    <div class="section-title" style="margin-top:4px;">Biblioteca de ejercicios</div>
+    <div class="cat-row" id="lib-cat-row"></div>
+    <div id="library-list" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- ============ REWARDS ============ -->
+  <div class="screen hidden" id="screen-rewards">
+    <div class="section-title" style="margin-top:4px;">⭐ Recompensa VIP</div>
+    <div class="vip-card">
+      <span class="exclusive-tag">👑 EXCLUSIVO</span>
+      <div class="vip-title">Acceso VIP<br>7 días gratis</div>
+      <div class="vip-feat">⚡ Rutinas premium desbloqueadas</div>
+      <div class="vip-feat">⚡ Planes de dieta personalizados</div>
+      <div class="vip-feat">⚡ Sin anuncios por 7 días</div>
+      <div class="vip-feat">⚡ Insignia VIP en tu perfil</div>
+      <button class="lock-btn" id="vip-btn">🔒 Necesitas 215 pts más</button>
+      <div class="sim-note">Simulado — sin pagos reales. Integración de pago pendiente.</div>
+    </div>
+
+    <div class="section-title">🍽️ Planes de dieta</div>
+    <div class="reward-card">
+      <div class="reward-top">
+        <div><div class="reward-name">🥗 Plan Quema Grasa</div><div class="reward-desc">Dieta baja en carbohidratos. 1800 kcal/día.</div></div>
+        <div class="reward-cost">100 pts</div>
+      </div>
+      <button class="reward-btn" data-cost="100" data-reward="Plan Quema Grasa">Canjear</button>
+    </div>
+    <div class="reward-card">
+      <div class="reward-top">
+        <div><div class="reward-name">🥩 Plan Masa Muscular</div><div class="reward-desc">Alta proteína para ganar músculo. 2500 kcal.</div></div>
+        <div class="reward-cost">200 pts</div>
+      </div>
+      <button class="reward-btn" data-cost="200" data-reward="Plan Masa Muscular">Canjear</button>
+    </div>
+
+    <div class="section-title">🎁 Otras recompensas</div>
+    <div class="reward-card">
+      <div class="reward-top">
+        <div><div class="reward-name">🎫 Cupón tienda deportiva</div><div class="reward-desc">10% de descuento simbólico</div></div>
+        <div class="reward-cost">150 pts</div>
+      </div>
+      <button class="reward-btn" data-cost="150" data-reward="Cupón tienda deportiva">Canjear</button>
+    </div>
+    <div class="reward-card">
+      <div class="reward-top">
+        <div><div class="reward-name">🌟 Insignia dorada de perfil</div><div class="reward-desc">Muestra tu dedicación</div></div>
+        <div class="reward-cost">80 pts</div>
+      </div>
+      <button class="reward-btn" data-cost="80" data-reward="Insignia dorada">Canjear</button>
+    </div>
+  </div>
+
+  <!-- ============ MEDALS ============ -->
+  <div class="screen hidden" id="screen-medals">
+    <div class="section-title" style="margin-top:4px;">Tus medallas</div>
+    <div class="medal-grid" id="medal-grid"></div>
+  </div>
+
+  <!-- ============ PROFILE ============ -->
+  <div class="screen hidden" id="screen-profile">
+    <div class="profile-head">
+      <div class="avatar-circle">🏋️</div>
+      <div class="profile-name">Atleta</div>
+      <div class="level-chip">Nivel <span id="p-level">1</span> · <span id="p-rank">Novato</span></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="p-pts">0</div><div class="stat-label">Puntos totales</div></div>
+      <div class="stat-box"><div class="stat-num" id="p-count">0</div><div class="stat-label">Ejercicios hechos</div></div>
+      <div class="stat-box"><div class="stat-num" id="p-streak">0</div><div class="stat-label">Racha (días)</div></div>
+    </div>
+    <div class="section-title">Historial reciente</div>
+    <div id="history-list"></div>
+    <button class="reset-btn" id="reset-btn">Borrar todo mi progreso</button>
+  </div>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" data-screen="home"><span class="nav-icon">🏠</span>Inicio</button>
+    <button class="nav-btn" data-screen="library"><span class="nav-icon">📚</span>Ejercicios</button>
+    <button class="nav-btn" data-screen="rewards"><span class="nav-icon">🎁</span>Canjear</button>
+    <button class="nav-btn" data-screen="medals"><span class="nav-icon">🏆</span>Medallas</button>
+    <button class="nav-btn" data-screen="profile"><span class="nav-icon">👤</span>Perfil</button>
+  </div>
+
+</div>
+
+<!-- ============ WORKOUT FULLSCREEN ============ -->
+<div class="workout-screen hidden" id="workout-screen">
+  <button class="wo-close" id="wo-close-btn">✕</button>
+
+  <div id="wo-active-view">
+    <div class="wo-phase-label work" id="wo-phase-label">Prepárate</div>
+    <div class="wo-ex-name" id="wo-ex-name">Flexiones</div>
+
+    <div class="timer-ring-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="timer-ring-bg" cx="50" cy="50" r="44"></circle>
+        <circle class="timer-ring-fg work" id="ring-fg" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"></circle>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-num" id="timer-num">5</div>
+        <div class="timer-sub" id="timer-sub">segundos</div>
+      </div>
+    </div>
+
+    <div class="wo-progress-dots" id="wo-dots"></div>
+
+    <div class="wo-illustration" id="wo-illustration">💪</div>
+    <div class="wo-instructions" id="wo-instructions">Prepárate, el ejercicio va a comenzar...</div>
+
+    <div class="wo-controls">
+      <button class="wo-btn secondary" id="wo-pause-btn">Pausar</button>
+      <button class="wo-btn primary" id="wo-skip-btn">Saltar fase</button>
+    </div>
+  </div>
+
+  <div class="wo-summary hidden" id="wo-summary-view">
+    <div class="big-emoji">🎉</div>
+    <h2>¡Entrenamiento completo!</h2>
+    <div style="color:var(--text-dim); font-size:14px;" id="wo-summary-sub">Completaste Flexiones</div>
+    <div class="pts-earned" id="wo-summary-pts">+40 pts</div>
+    <button class="wo-btn primary" id="wo-finish-btn" style="width:100%; max-width:260px;">Volver al inicio</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   FITGANA — lógica de la app
+   Almacenamiento: localStorage (persistencia local del dispositivo)
+   ===================================================== */
+
+const STORAGE_KEY = 'fitgana_state_v1';
+
+const CATEGORIES = [
+  {id:'todos', label:'Todos', icon:'🔘'},
+  {id:'cardio', label:'Cardio', icon:'🏃'},
+  {id:'fuerza', label:'Fuerza', icon:'💪'},
+  {id:'yoga', label:'Yoga', icon:'🧘'},
+];
+
+// Catálogo de ejercicios. equip: 'bw' (peso corporal) o 'dumbbell' (mancuernas)
+const EXERCISES = [
+  {id:'flexiones', name:'Flexiones', icon:'🤸', cat:'fuerza', equip:'bw',
+   meta:'3 sets × 12 reps · Pecho y tríceps', pts:40, work:40, rest:30, rounds:3,
+   instructions:'Manos al ancho de los hombros, cuerpo recto como una tabla. Baja el pecho hasta casi tocar el suelo y empuja de vuelta arriba sin arquear la espalda.'},
+  {id:'sentadillas', name:'Sentadillas', icon:'🦵', cat:'fuerza', equip:'bw',
+   meta:'4 sets × 15 reps · Piernas y glúteos', pts:45, work:40, rest:30, rounds:4,
+   instructions:'Pies al ancho de cadera, baja como si te sentaras en una silla manteniendo la espalda recta y el peso en los talones. Sube empujando con los talones.'},
+  {id:'burpees', name:'Burpees', icon:'🏃', cat:'cardio', equip:'bw',
+   meta:'3 sets × 10 reps · Quema grasa máxima', pts:50, work:40, rest:30, rounds:3,
+   instructions:'Agáchate, pon las manos en el suelo, salta a posición de plancha, haz una flexión, vuelve a agacharte y salta hacia arriba con los brazos extendidos.'},
+  {id:'cuerda', name:'Saltar cuerda', icon:'🪢', cat:'cardio', equip:'bw',
+   meta:'5 min continuo · Cardio intenso', pts:40, work:40, rest:20, rounds:5,
+   instructions:'Salta con un ritmo constante, usando solo las muñecas para girar la cuerda. Mantén las rodillas ligeramente flexionadas para absorber el impacto.'},
+  {id:'dominadas', name:'Dominadas', icon:'🧗', cat:'fuerza', equip:'bw',
+   meta:'3 sets × 8 reps · Espalda y bíceps', pts:60, work:30, rest:40, rounds:3,
+   instructions:'Cuelga de la barra con agarre firme, tira hacia arriba hasta que la barbilla pase la barra, controlando el descenso sin dejarte caer.'},
+  {id:'curl-mancuerna', name:'Curl de bíceps', icon:'🏋️', cat:'fuerza', equip:'dumbbell',
+   meta:'4 sets × 12 reps · Mancuernas · Bíceps', pts:45, work:40, rest:30, rounds:4,
+   instructions:'Sostén una mancuerna en cada mano con los brazos extendidos. Flexiona el codo subiendo el peso hacia el hombro sin mover el resto del brazo.'},
+  {id:'press-hombro', name:'Press de hombro', icon:'🏋️', cat:'fuerza', equip:'dumbbell',
+   meta:'3 sets × 10 reps · Mancuernas · Hombros', pts:45, work:40, rest:30, rounds:3,
+   instructions:'Sostén las mancuernas a la altura de los hombros, empuja hacia arriba hasta extender los brazos por completo, luego baja con control.'},
+  {id:'zancadas-mancuerna', name:'Zancadas con peso', icon:'🚶', cat:'fuerza', equip:'dumbbell',
+   meta:'3 sets × 12 reps · Mancuernas · Piernas', pts:50, work:40, rest:30, rounds:3,
+   instructions:'Sostén una mancuerna en cada mano, da un paso largo al frente y baja la rodilla trasera casi al suelo. Vuelve al centro y alterna de pierna.'},
+  {id:'meditacion', name:'Meditación activa', icon:'🧘', cat:'yoga', equip:'bw',
+   meta:'5 min · Mente y cuerpo', pts:25, work:60, rest:0, rounds:5,
+   instructions:'Siéntate con la espalda recta, cierra los ojos y concentra tu atención en la respiración, dejando pasar los pensamientos sin aferrarte a ellos.'},
+  {id:'saludo-sol', name:'Saludo al sol', icon:'🌅', cat:'yoga', equip:'bw',
+   meta:'3 rondas · Flexibilidad completa', pts:35, work:45, rest:15, rounds:3,
+   instructions:'Encadena la secuencia de posturas (montaña, flexión adelante, plancha, perro boca abajo) respirando profundamente en cada transición.'},
+  {id:'plancha', name:'Plancha', icon:'🪵', cat:'fuerza', equip:'bw',
+   meta:'3 sets × 45 seg · Core completo', pts:30, work:45, rest:20, rounds:3,
+   instructions:'Apóyate en antebrazos y puntas de los pies, cuerpo recto de cabeza a talones, abdomen contraído. No dejes caer la cadera.'},
+];
+
+const MEDALS = [
+  {id:'primera-llama', name:'Primera Llama', desc:'Completa tu 1er ejercicio', emoji:'🔥', check:s=>s.totalCompleted>=1},
+  {id:'calentando', name:'Calentando', desc:'5 ejercicios completados', emoji:'💪', check:s=>s.totalCompleted>=5},
+  {id:'en-llamas', name:'En Llamas', desc:'20 ejercicios completados', emoji:'🌋', check:s=>s.totalCompleted>=20},
+  {id:'racha-fuego', name:'Racha de Fuego', desc:'Racha de 3 días', emoji:'⚡', check:s=>s.streak>=3},
+  {id:'semana-perfecta', name:'Semana Perfecta', desc:'Racha de 7 días', emoji:'🥇', check:s=>s.streak>=7},
+  {id:'maestro-cardio', name:'Maestro Cardio', desc:'500 puntos de cardio', emoji:'🏃', check:s=>(s.catPoints.cardio||0)>=500},
+  {id:'bestia-fuerza', name:'Bestia de Fuerza', desc:'500 puntos de fuerza', emoji:'🦁', check:s=>(s.catPoints.fuerza||0)>=500},
+  {id:'alma-zen', name:'Alma Zen', desc:'300 puntos de yoga', emoji:'🙏', check:s=>(s.catPoints.yoga||0)>=300},
+];
+
+const RANKS = ['Novato','Iniciado','Guerrero','Campeón','Leyenda'];
+
+function defaultState(){
+  return {
+    points:0, totalEarned:0, totalCompleted:0, streak:0, lastActiveDate:null,
+    xp:0, level:1, catPoints:{}, completedToday:[], history:[], earnedMedals:[], unlocks:[]
+  };
+}
+
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  }catch(e){ return defaultState(); }
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function checkStreak(){
+  const today = todayStr();
+  if(state.lastActiveDate === today) return; // ya contado hoy
+  const yest = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(state.lastActiveDate === yest){ state.streak += 1; }
+  else if(state.lastActiveDate !== today){ state.streak = 1; }
+  state.lastActiveDate = today;
+  state.completedToday = [];
+  saveState();
+}
+
+function xpNeededForLevel(level){ return level*500; }
+
+function addPoints(amount, cat){
+  state.points += amount;
+  state.totalEarned += amount;
+  state.xp += amount;
+  state.catPoints[cat] = (state.catPoints[cat]||0) + amount;
+  let needed = xpNeededForLevel(state.level);
+  while(state.xp >= needed){
+    state.xp -= needed;
+    state.level += 1;
+    needed = xpNeededForLevel(state.level);
+    showToast('🎉 ¡Subiste a Nivel ' + state.level + '!');
+  }
+  saveState();
+}
+
+/* ---------------- AUDIO (Web Audio API, generado, sin archivos externos) ---------------- */
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq, duration, type='sine', vol=0.25){
+  try{
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  }catch(e){}
+}
+function playCountdownTick(){ beep(880, 0.08, 'square', 0.15); }
+function playPhaseStart(){ beep(523, 0.15, 'sine', 0.3); setTimeout(()=>beep(784,0.18,'sine',0.3), 150); }
+function playRestStart(){ beep(392, 0.25, 'sine', 0.25); }
+function playFinish(){ beep(523,0.12); setTimeout(()=>beep(659,0.12),120); setTimeout(()=>beep(784,0.12),240); setTimeout(()=>beep(1047,0.25),360); }
+function speak(text){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'es-ES'; u.rate = 1.05; u.volume = 1;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------------- TOAST ---------------- */
+let toastTimer = null;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+/* ---------------- NAVIGATION ---------------- */
+const screens = ['home','library','rewards','medals','profile'];
+function showScreen(name){
+  screens.forEach(s=>{
+    document.getElementById('screen-'+s).classList.toggle('hidden', s!==name);
+  });
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.screen===name);
+  });
+  if(name==='rewards') renderRewards();
+  if(name==='medals') renderMedals();
+  if(name==='profile') renderProfile();
+}
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>showScreen(btn.dataset.screen));
+});
+
+/* ---------------- HOME: categories + exercise list ---------------- */
+let activeCat = 'todos';
+function renderCatRow(){
+  const row = document.getElementById('cat-row');
+  row.innerHTML = '';
+  CATEGORIES.forEach(c=>{
+    const pill = document.createElement('button');
+    pill.className = 'cat-pill' + (activeCat===c.id ? ' active':'');
+    pill.innerHTML = c.icon + ' ' + c.label;
+    pill.onclick = ()=>{ activeCat = c.id; renderCatRow(); renderExerciseList(); };
+    row.appendChild(pill);
+  });
+}
+
+function renderExerciseList(){
+  const list = document.getElementById('exercise-list');
+  list.innerHTML = '';
+  const filtered = EXERCISES.filter(e=> activeCat==='todos' || e.cat===activeCat);
+  filtered.forEach(ex=>{
+    const done = state.completedToday.includes(ex.id);
+    const card = document.createElement('div');
+    card.className = 'ex-card' + (done?' done':'');
+    card.innerHTML = `
+      <div class="ex-icon">${ex.icon}</div>
+      <div class="ex-info">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-sub">${ex.meta}</div>
+      </div>
+      <div class="ex-action">
+        ${done
+          ? `<div class="btn-done">✓ HECHO</div><div class="pts-tag">+${ex.pts} pts</div>`
+          : `<button class="btn-go">Empezar</button><div class="pts-tag">+${ex.pts} pts</div>`
+        }
+      </div>`;
+    if(!done){
+      card.querySelector('.btn-go').onclick = ()=> startWorkout(ex.id);
+    }
+    list.appendChild(card);
+  });
+}
+
+/* ---------------- LIBRARY ---------------- */
+let activeLibCat = 'todos';
+function renderLibCatRow(){
+  const row = document.getElementById('lib-cat-row');
+  row.innerHTML = '';
+  CATEGORIES.forEach(c=>{
+    const pill = document.createElement('button');
+    pill.className = 'cat-pill' + (activeLibCat===c.id ? ' active':'');
+    pill.innerHTML = c.icon + ' ' + c.label;
+    pill.onclick = ()=>{ activeLibCat = c.id; renderLibCatRow(); renderLibraryList(); };
+    row.appendChild(pill);
+  });
+}
+function renderLibraryList(){
+  const list = document.getElementById('library-list');
+  list.innerHTML = '';
+  const filtered = EXERCISES.filter(e=> activeLibCat==='todos' || e.cat===activeLibCat);
+  filtered.forEach(ex=>{
+    const card = document.createElement('div');
+    card.className = 'lib-card';
+    card.innerHTML = `
+      <div class="lib-img">${ex.icon}</div>
+      <div class="lib-body">
+        <div class="lib-name">${ex.name}</div>
+        <div class="lib-meta">${ex.meta}</div>
+        <span class="eq-tag ${ex.equip}">${ex.equip==='bw' ? '🧍 Peso corporal' : '🏋️ Mancuernas'}</span>
+      </div>`;
+    card.onclick = ()=> startWorkout(ex.id);
+    list.appendChild(card);
+  });
+}
+
+/* ---------------- REWARDS ---------------- */
+function renderRewards(){
+  document.getElementById('pts-display').textContent = state.points;
+  const vipCost = 300;
+  const vipBtn = document.getElementById('vip-btn');
+  if(state.points >= vipCost){
+    vipBtn.textContent = '👑 Activar VIP (7 días)';
+    vipBtn.className = 'lock-btn unlocked';
+    vipBtn.onclick = ()=> redeemVip(vipCost);
+  } else {
+    vipBtn.textContent = `🔒 Necesitas ${vipCost - state.points} pts más`;
+    vipBtn.className = 'lock-btn';
+    vipBtn.onclick = null;
+  }
+  document.querySelectorAll('.reward-btn').forEach(btn=>{
+    const cost = parseInt(btn.dataset.cost,10);
+    btn.disabled = state.points < cost;
+    btn.textContent = state.points < cost ? `Necesitas ${cost-state.points} pts más` : 'Canjear';
+    btn.onclick = ()=> redeemReward(cost, btn.dataset.reward);
+  });
+}
+function redeemVip(cost){
+  if(state.points < cost) return;
+  state.points -= cost;
+  state.unlocks.push({name:'VIP 7 días', date: todayStr()});
+  saveState();
+  showToast('👑 VIP activado (simulado) — sin pago real procesado');
+  renderRewards();
+}
+function redeemReward(cost, name){
+  if(state.points < cost) return;
+  state.points -= cost;
+  state.unlocks.push({name, date: todayStr()});
+  saveState();
+  showToast('🎁 "' + name + '" canjeado (simulado)');
+  renderRewards();
+}
+
+/* ---------------- MEDALS ---------------- */
+function renderMedals(){
+  const grid = document.getElementById('medal-grid');
+  grid.innerHTML = '';
+  MEDALS.forEach(m=>{
+    const earned = m.check(state);
+    const card = document.createElement('div');
+    card.className = 'medal-card' + (earned?' earned':'');
+    card.innerHTML = `<span class="medal-emoji">${m.emoji}</span><div class="medal-name">${m.name}</div><div class="medal-desc">${m.desc}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------- PROFILE ---------------- */
+function renderProfile(){
+  document.getElementById('p-level').textContent = state.level;
+  document.getElementById('p-rank').textContent = RANKS[Math.min(state.level-1, RANKS.length-1)];
+  document.getElementById('p-pts').textContent = state.points;
+  document.getElementById('p-count').textContent = state.totalCompleted;
+  document.getElementById('p-streak').textContent = state.streak;
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+  state.history.slice(-10).reverse().forEach(h=>{
+    const row = document.createElement('div');
+    row.className = 'hist-row';
+    row.innerHTML = `<span>${h.name}</span><span class="hist-pts">+${h.pts} pts</span>`;
+    list.appendChild(row);
+  });
+  if(state.history.length===0){
+    list.innerHTML = '<div style="color:var(--text-dim); font-size:13px; padding:20px 0; text-align:center;">Aún no has completado ejercicios.</div>';
+  }
+}
+document.getElementById('reset-btn').addEventListener('click', ()=>{
+  if(confirm('¿Seguro que quieres borrar todo tu progreso? Esta acción no se puede deshacer.')){
+    state = defaultState();
+    saveState();
+    refreshAll();
+    showToast('Progreso borrado');
+  }
+});
+
+/* ---------------- HOME header refresh ---------------- */
+function renderHomeHeader(){
+  document.getElementById('pts-display').textContent = state.points;
+  document.getElementById('streak-num').textContent = state.streak;
+  document.getElementById('streak-text').textContent = state.streak + (state.streak===1?' día':' días');
+  document.getElementById('level-num').textContent = state.level;
+  document.getElementById('xp-current').textContent = state.xp;
+  const needed = xpNeededForLevel(state.level);
+  document.getElementById('xp-needed').textContent = needed;
+  document.getElementById('xp-fill').style.width = Math.min(100, (state.xp/needed)*100) + '%';
+}
+
+function refreshAll(){
+  renderHomeHeader();
+  renderCatRow();
+  renderExerciseList();
+  renderLibCatRow();
+  renderLibraryList();
+}
+
+/* =====================================================
+   WORKOUT MODE — temporizador guiado con sonido
+   ===================================================== */
+let wo = null; // estado del entrenamiento activo
+let woInterval = null;
+let woPaused = false;
+
+function startWorkout(exId){
+  const ex = EXERCISES.find(e=>e.id===exId);
+  if(!ex) return;
+  if(state.completedToday.includes(exId)){
+    showToast('Ya completaste este ejercicio hoy');
+    return;
+  }
+  wo = {
+    ex, round:1, totalRounds:ex.rounds, phase:'prep', secondsLeft:5
+  };
+  document.getElementById('workout-screen').classList.remove('hidden');
+  document.getElementById('wo-active-view').classList.remove('hidden');
+  document.getElementById('wo-summary-view').classList.add('hidden');
+  document.getElementById('wo-ex-name').textContent = ex.name;
+  document.getElementById('wo-illustration').textContent = ex.icon;
+  document.getElementById('wo-instructions').textContent = ex.instructions;
+  renderDots();
+  speak('Prepárate para ' + ex.name);
+  tickWorkout(true);
+  woInterval = setInterval(()=>tickWorkout(false), 1000);
+}
+
+function renderDots(){
+  const wrap = document.getElementById('wo-dots');
+  wrap.innerHTML = '';
+  for(let i=1;i<=wo.totalRounds;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i<wo.round?' done':'') + (i===wo.round?' current':'');
+    wrap.appendChild(d);
+  }
+}
+
+const RING_CIRC = 2 * Math.PI * 44; // ~276.46
+
+function updateRing(secondsLeft, totalSeconds, phaseClass){
+  const ring = document.getElementById('ring-fg');
+  ring.classList.remove('work','rest');
+  ring.classList.add(phaseClass);
+  const pct = Math.max(0, secondsLeft/totalSeconds);
+  ring.setAttribute('stroke-dasharray', RING_CIRC.toFixed(2));
+  ring.setAttribute('stroke-dashoffset', (RING_CIRC*(1-pct)).toFixed(2));
+}
+
+function tickWorkout(isInit){
+  if(!wo) return;
+  if(woPaused && !isInit) return;
+
+  const ex = wo.ex;
+
+  if(!isInit){
+    wo.secondsLeft -= 1;
+    if(wo.secondsLeft <= 3 && wo.secondsLeft > 0) playCountdownTick();
+  }
+
+  if(wo.secondsLeft <= 0){
+    advancePhase();
+    return;
+  }
+
+  renderTimerUI();
+}
+
+function renderTimerUI(){
+  const ex = wo.ex;
+  const label = document.getElementById('wo-phase-label');
+  const sub = document.getElementById('timer-sub');
+  document.getElementById('timer-num').textContent = wo.secondsLeft;
+
+  if(wo.phase==='prep'){
+    label.textContent = 'Prepárate';
+    label.className = 'wo-phase-label work';
+    sub.textContent = 'comenzando...';
+    updateRing(wo.secondsLeft, 5, 'work');
+  } else if(wo.phase==='work'){
+    label.textContent = `Trabajo · Ronda ${wo.round}/${wo.totalRounds}`;
+    label.className = 'wo-phase-label work';
+    sub.textContent = 'segundos de esfuerzo';
+    updateRing(wo.secondsLeft, ex.work, 'work');
+  } else if(wo.phase==='rest'){
+    label.textContent = 'Descanso';
+    label.className = 'wo-phase-label rest';
+    sub.textContent = 'segundos de descanso';
+    updateRing(wo.secondsLeft, ex.rest, 'rest');
+  }
+}
+
+function advancePhase(){
+  const ex = wo.ex;
+
+  if(wo.phase==='prep'){
+    wo.phase = 'work';
+    wo.secondsLeft = ex.work;
+    playPhaseStart();
+    speak('¡Comienza!');
+  } else if(wo.phase==='work'){
+    if(ex.rest > 0 && wo.round < wo.totalRounds){
+      wo.phase = 'rest';
+      wo.secondsLeft = ex.rest;
+      playRestStart();
+      speak('Descansa');
+    } else if(wo.round < wo.totalRounds){
+      wo.round += 1;
+      wo.phase = 'work';
+      wo.secondsLeft = ex.work;
+      playPhaseStart();
+      speak('Ronda ' + wo.round);
+      renderDots();
+    } else {
+      finishWorkout();
+      return;
+    }
+  } else if(wo.phase==='rest'){
+    wo.round += 1;
+    wo.phase = 'work';
+    wo.secondsLeft = ex.work;
+    playPhaseStart();
+    speak('¡Comienza ronda ' + wo.round + '!');
+    renderDots();
+  }
+  renderDots();
+  renderTimerUI();
+}
+
+function finishWorkout(){
+  clearInterval(woInterval);
+  woInterval = null;
+  playFinish();
+  speak('¡Excelente trabajo! Ejercicio completado.');
+
+  const ex = wo.ex;
+  checkStreak();
+  state.completedToday.push(ex.id);
+  state.totalCompleted += 1;
+  state.history.push({name:ex.name, pts:ex.pts, date: todayStr()});
+  addPoints(ex.pts, ex.cat);
+  saveState();
+
+  document.getElementById('wo-active-view').classList.add('hidden');
+  document.getElementById('wo-summary-view').classList.remove('hidden');
+  document.getElementById('wo-summary-sub').textContent = 'Completaste ' + ex.name;
+  document.getElementById('wo-summary-pts').textContent = '+' + ex.pts + ' pts';
+
+  checkNewMedals();
+  wo = null;
+}
+
+function checkNewMedals(){
+  MEDALS.forEach(m=>{
+    if(m.check(state) && !state.earnedMedals.includes(m.id)){
+      state.earnedMedals.push(m.id);
+      setTimeout(()=> showToast(m.emoji + ' ¡Medalla desbloqueada: ' + m.name + '!'), 800);
+    }
+  });
+  saveState();
+}
+
+function closeWorkout(){
+  clearInterval(woInterval);
+  woInterval = null;
+  wo = null;
+  woPaused = false;
+  document.getElementById('workout-screen').classList.add('hidden');
+  document.getElementById('wo-pause-btn').textContent = 'Pausar';
+  refreshAll();
+}
+
+document.getElementById('wo-close-btn').addEventListener('click', ()=>{
+  if(confirm('¿Salir del entrenamiento? Perderás el progreso de esta sesión.')){
+    closeWorkout();
+  }
+});
+document.getElementById('wo-finish-btn').addEventListener('click', closeWorkout);
+
+document.getElementById('wo-pause-btn').addEventListener('click', (e)=>{
+  woPaused = !woPaused;
+  e.target.textContent = woPaused ? 'Reanudar' : 'Pausar';
+});
+
+document.getElementById('wo-skip-btn').addEventListener('click', ()=>{
+  if(wo) advancePhase();
+});
+
+/* ---------------- INIT ---------------- */
+checkStreak();
+refreshAll();
+showScreen('home');
+</script>
+
+</body>
+</html>
